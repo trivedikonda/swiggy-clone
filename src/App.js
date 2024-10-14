@@ -1,25 +1,79 @@
-import logo from './logo.svg';
-import './App.css';
+import React,{lazy,Suspense,useState,useEffect} from "react";
+import ReactDOM from "react-dom/client";
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import {Provider} from "react-redux"
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import Header from './components/Header';
+import Body from './components/Body';
+import About from "./components/About";
+import ContactUs from "./components/ContactUs";
+import RestaurantMenu from "./components/RestaurantMenu";
+import Error from "./components/Error";
+import Cart from "./components/Cart";
+import appStore from "./utils/appStore";
+import UserContext from "./utils/UserContext";
+
+const Grocery = lazy(()=>import("./components/Grocery"))
+
+const AppLayout = () => {
+    const [userName, setUserName]=useState()
+
+    useEffect(()=>{
+        const data={
+            name:"Konda Trivedi"
+        }
+
+        setUserName(data.name)
+    },[])
+    return(
+        <Provider store={appStore}>
+          <UserContext.Provider value={{loggedInUser: userName,setUserName}}>
+                <div className="app">
+                    <Header/>
+                    <Outlet/>
+                </div>
+            </UserContext.Provider>
+        </Provider>
+        
+    )
 }
 
-export default App;
+const appRouter = createBrowserRouter([
+    {
+        path:"/",
+        element:<AppLayout/>,
+        children:[
+            {
+                path:"/",
+                element:<Body/>
+            },
+            {
+                path:"/about",
+                element:<About/>
+            },
+            {
+                path:"/contact",
+                element:<ContactUs/>
+            },
+            {
+                path:"/grocery",
+                element:<Suspense fallback={<h1>Loading......</h1>}><Grocery/></Suspense>
+            },
+            {
+                path:"/cart",
+                element:<Cart/>
+            },
+            {
+                path:"/restaurant/:resId",
+                element:<RestaurantMenu/>
+            }
+        ],
+        errorElement:<Error/>
+    }
+])
+
+const root = ReactDOM.createRoot(document.getElementById("root"))
+
+root.render(<RouterProvider router={appRouter}/>)
+
+export default AppLayout
